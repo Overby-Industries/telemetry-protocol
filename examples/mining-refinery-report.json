@@ -1,0 +1,26 @@
+{
+  "version": "OTF-1",
+  "timestamp": "2025-03-02T09:12:00Z",
+  "mission": {
+    "id": "nea-2025-alpha",
+    "podId": "R7",
+    "type": "refinery"
+  },
+  "location": {
+    "altitude_km": 0,
+    "zone": "NEA"
+  },
+  "target": {
+    "objectType": "regolith"
+  },
+  "action": "processed",
+  "outcome": {
+    "processedKg": 1200.0,
+    "repurposedAs": "aggregate",
+    "status": "stored"
+  },
+  "certifications": {
+    "SMESSC": true,
+    "ODCI_contribution": 0
+  }
+}
