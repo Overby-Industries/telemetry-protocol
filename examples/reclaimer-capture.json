@@ -1,0 +1,31 @@
+{
+  "version": "OTF-1",
+  "timestamp": "2025-02-18T14:05:22Z",
+  "mission": {
+    "id": "orbital-demo-1",
+    "podId": "A1",
+    "type": "reclaimer"
+  },
+  "location": {
+    "altitude_km": 825,
+    "inclination_deg": 51.6,
+    "zone": "LEO"
+  },
+  "target": {
+    "catalogId": "NORAD-33953",
+    "objectType": "fragment",
+    "size_cm": 45,
+    "mass_kg": 5.2
+  },
+  "action": "captured",
+  "outcome": {
+    "processedKg": 5.0,
+    "repurposedAs": "shield_block",
+    "status": "stored"
+  },
+  "certifications": {
+    "SMESSC": true,
+    "ODCI_contribution": 5.0,
+    "ProofOfCleanupToken": "0xabc123debriscredit"
+  }
+}

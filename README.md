@@ -93,6 +93,22 @@ This open standard ensures Overby’s transparency while enabling:
   }
 }
 ```
+## ✅ Formal Schema & Validation
+
+The JSON above is now a real, enforceable [JSON Schema](schema/otf-1.schema.json)
+(Draft 2020-12), with runnable examples in [`examples/`](examples/) and a
+validator in [`tools/validate.py`](tools/validate.py):
+
+```bash
+pip install jsonschema
+python tools/validate.py            # validates everything under examples/
+python tools/validate.py my-packet.json
+```
+
+CI ([`.github/workflows/validate.yml`](.github/workflows/validate.yml)) runs
+this on every push and PR, so a schema change that breaks an example gets
+caught before it merges.
+
 ## 📡 Example Usage
 `✔ Reclaimer Pod Capture Event`
 The pod captures a 5.2kg fragment →

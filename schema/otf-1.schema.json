@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Overby-Industries/telemetry-protocol/schema/otf-1.schema.json",
+  "title": "OTF-1 (Overby Telemetry Format v1)",
+  "description": "Canonical schema for real-time reporting of Overby Industries mining, reclamation, and certification telemetry. See README.md for the full field-by-field rationale.",
+  "type": "object",
+  "required": ["version", "timestamp", "mission", "location", "action", "outcome", "certifications"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": "OTF-1"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC ISO-8601 timestamp of the event."
+    },
+    "mission": {
+      "type": "object",
+      "required": ["id", "podId", "type"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "podId": { "type": "string" },
+        "type": {
+          "type": "string",
+          "enum": ["reclaimer", "miner", "refinery"]
+        }
+      }
+    },
+    "location": {
+      "type": "object",
+      "required": ["zone"],
+      "additionalProperties": false,
+      "properties": {
+        "altitude_km": { "type": "number", "minimum": 0 },
+        "inclination_deg": { "type": "number", "minimum": 0, "maximum": 180 },
+        "zone": {
+          "type": "string",
+          "enum": ["LEO", "MEO", "GEO", "cislunar", "NEA", "belt", "surface"]
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "description": "Present for debris-capture events (mission.type = reclaimer). Omitted for mining/refinery processing events that have no single tracked object.",
+      "required": ["objectType"],
+      "additionalProperties": false,
+      "properties": {
+        "catalogId": { "type": "string" },
+        "objectType": {
+          "type": "string",
+          "enum": ["fragment", "spent-stage", "derelict-satellite", "regolith", "volatile", "ore"]
+        },
+        "size_cm": { "type": "number", "minimum": 0 },
+        "mass_kg": { "type": "number", "minimum": 0 }
+      }
+    },
+    "action": {
+      "type": "string",
+      "enum": ["captured", "processed", "refined", "stored", "deorbited", "deployed"]
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "processedKg": { "type": "number", "minimum": 0 },
+        "repurposedAs": {
+          "type": "string",
+          "enum": ["shield_block", "aggregate", "ingot", "propellant", "polymer", "none"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["stored", "in-transit", "delivered", "failed"]
+        }
+      }
+    },
+    "certifications": {
+      "type": "object",
+      "required": ["SMESSC"],
+      "additionalProperties": false,
+      "properties": {
+        "SMESSC": {
+          "type": "boolean",
+          "description": "Space Mining Environmental, Safety & Sustainability Certification compliance flag for this event."
+        },
+        "ODCI_contribution": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Incremental contribution (kg) to the Orbital Debris Cleanup Index, if applicable."
+        },
+        "ProofOfCleanupToken": {
+          "type": "string",
+          "description": "Blockchain token id proving this event's outcome, if issued."
+        }
+      }
+    }
+  }
+}
