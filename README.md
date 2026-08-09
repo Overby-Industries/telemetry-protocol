@@ -1,10 +1,10 @@
-# 📡 Overby Telemetry Format v1 (OTF‑1)
+# Overby Telemetry Format v1 (OTF‑1)
 
 **Overby Industries – Telemetry Protocol Specification**
 
 ---
 
-## 🌌 Overview
+## Overview
 OTF‑1 (Overby Telemetry Format v1) the canonical open protocol, but also ties together with the Overby certification frameworks:
 
 - SMESSC → Space Mining Environmental, Safety, & Sustainability Certification
@@ -21,13 +21,13 @@ OTF‑1 defines the **Overby Telemetry Format** for real‑time reporting of:
 - Certification compliance (SMESSC, ODCI)
 
 This open standard ensures Overby’s transparency while enabling:
-- 📡 Public trust via live data feeds
-- 🔍 Auditable logs for regulators/insurers
-- 🤝 Interoperability across fleets and partners
+- Public trust via live data feeds
+- Auditable logs for regulators/insurers
+- Interoperability across fleets and partners
 
 ---
 
-## 🚀 Why OTF‑1?
+## Why OTF‑1?
 - **Trust** → Transparency is verifiable via blockchain Proof of Cleanup credit logging.  
 - **Authority** → OTF‑1 standardizes reporting across all Overby missions.  
 - **Interoperability** → Designed for spacecraft PLC runtimes + ground ops dashboards.  
@@ -35,30 +35,30 @@ This open standard ensures Overby’s transparency while enabling:
 
 ---
 
-## 🪐 Certification Frameworks
+## Certification Frameworks
 - SMESSC (Space Mining Environmental, Safety & Sustainability Certification)
-  - ✅ Ensures operations follow Overby’s zero-waste, risk‑mitigated, and ethical mining/reclamation standards.
-  - ✅ Incorporated into every OTF packet under certifications.SMESSC.
+  - Ensures operations follow Overby’s zero-waste, risk‑mitigated, and ethical mining/reclamation standards.
+  - Incorporated into every OTF packet under certifications.SMESSC.
 
 - ODCI (Orbital Debris Cleanup Index)
-  - ✅ Aggregated global metric (percentage of orbit cleaned, debris mass removed).
-  - ✅ Incremental contributions (ODCI_contribution) are logged per event.
-  - ✅ Investors/regulators can watch “orbital health” in a live metric.
+  - Aggregated global metric (percentage of orbit cleaned, debris mass removed).
+  - Incremental contributions (ODCI_contribution) are logged per event.
+  - Investors/regulators can watch “orbital health” in a live metric.
 
 - Proof of Cleanup Credits (PoC)
-  -  ✅ Every debris capture/removal event issues a blockchain token.
-  - ✅ Immutable record that “X object was reclaimed, Y kg removed”.
-  - ✅ Tradable or certifiable with insurers/operators as compliance evidence.
+  - Every debris capture/removal event issues a blockchain token.
+  - Immutable record that “X object was reclaimed, Y kg removed”.
+  - Tradable or certifiable with insurers/operators as compliance evidence.
 
-# ✅ Benefits
+# Benefits
 
 - OTF‑1 schema JSON = **machine & human readable** telemetry → simple, global adoption.  
-- Certification integration: SMESSC ✅ | ODCI ✅ | PoC Credit ✅.  
+- Certification integration: SMESSC | ODCI | PoC Credit.  
 - Creates Overby’s **authority layer** → you’re not just *cleaning space*, you’re **defining the rules of the game**.  
 - This signals to **UN, ESA, NASA, insurers**: *“Overby sets the standard globally.”*  
 - Public sees transparent metrics → “leaps and bounds” feel LITERAL on your dashboard.
 
-## 🧩 Core Schema (JSON)
+## Core Schema (JSON)
 
 ```json
 {
@@ -93,7 +93,7 @@ This open standard ensures Overby’s transparency while enabling:
   }
 }
 ```
-## ✅ Formal Schema & Validation
+## Formal Schema & Validation
 
 The JSON above is now a real, enforceable [JSON Schema](schema/otf-1.schema.json)
 (Draft 2020-12), with runnable examples in [`examples/`](examples/) and a
@@ -109,8 +109,8 @@ CI ([`.github/workflows/validate.yml`](.github/workflows/validate.yml)) runs
 this on every push and PR, so a schema change that breaks an example gets
 caught before it merges.
 
-## 📡 Example Usage
-`✔ Reclaimer Pod Capture Event`
+## Example Usage
+`Reclaimer Pod Capture Event`
 The pod captures a 5.2kg fragment →
 
 - OTF‑1 packet is emitted
@@ -119,7 +119,7 @@ The pod captures a 5.2kg fragment →
 - ODCI increment updated by +5kg
 - SMESSC flag confirms safe, certified process
 
-`✔ Mining Pod Refinery Report`
+`Mining Pod Refinery Report`
 Pod converts asteroid regolith into UHPC aggregate →
 
 - OTF‑1 packet logs processing
@@ -128,7 +128,7 @@ Pod converts asteroid regolith into UHPC aggregate →
 
 ---
 
-## 🔮 Roadmap for OTF‑1
+## Roadmap for OTF‑1
 Phase 1 (Q4 2025):
 
 - Schema finalized in open consultation (Overby GitHub Issues)
@@ -149,10 +149,10 @@ Phase 4 (2035+):
 - All Overby fleets exclusively speak OTF‑1
 - Certification & ODCI adoption by regulators/insurers
 
-## 🧑‍🚀 How to Contribute
+## How to Contribute
 - Open Issues to propose schema updates
 - Submit PRs for JSON schema docs, validation tools, or API middleware
 - Share expertise in telemetry, PLC comms, or blockchain audit
 
-## 📜 License
+## License
 OTF‑1 is released under Apache 2.0 for full open-source adoption.
