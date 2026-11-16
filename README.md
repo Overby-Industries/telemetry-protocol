@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/badge/Version-OTF--1-blue?style=for-the-badge&logo=github)](schema/otf-1.schema.json)
 [![Validate](https://img.shields.io/github/actions/workflow/status/Overby-Industries/telemetry-protocol/validate.yml?branch=main&style=for-the-badge&label=Validate&logo=githubactions&logoColor=white)](https://github.com/Overby-Industries/telemetry-protocol/actions/workflows/validate.yml)
+[![C++](https://img.shields.io/github/actions/workflow/status/Overby-Industries/telemetry-protocol/cpp.yml?branch=main&style=for-the-badge&label=C%2B%2B%2017&logo=cplusplus&logoColor=white)](https://github.com/Overby-Industries/telemetry-protocol/actions/workflows/cpp.yml)
 [![License](https://img.shields.io/badge/License-Apache_2.0-lightgrey?style=for-the-badge&logo=apache)](LICENSE)
 [![JSON Schema](https://img.shields.io/badge/JSON_Schema-Draft_2020--12-purple?style=for-the-badge&logo=json)](https://json-schema.org/draft/2020-12/release-notes)
 [![Certification](https://img.shields.io/badge/Certification-SMESSC_%7C_ODCI-green?style=for-the-badge)](#certification-frameworks)
@@ -148,9 +149,11 @@ unchanged. Events gained two things, both optional: `mission.type` may be
   or `coordinator`. A `status` or `ack` must come from a node and an
   `assignment` from a coordinator; the schema enforces it.
 - `seq` → a per-source counter that increases with every fleet packet the
-  source sends.
+  source sends. An integer from 0 to 2^53.
 - `destination` → on `assignment` and `ack`, the id of the one recipient.
-- `timestamp` → when the sender transmitted the packet.
+- `timestamp` → when the sender transmitted the packet. As everywhere in
+  OTF‑1, an RFC 3339 instant with an uppercase `T` and either `Z` or a
+  numeric offset: `2025-02-18T14:05:30Z`. UTC is preferred.
 
 ### `status`
 
@@ -274,6 +277,90 @@ The reference implementation of both ends is
 [`starlifter-os`](https://github.com/Overby-Industries/starlifter-os), which
 also records the reasoning behind each rule in its
 `docs/fleet-coordination.md`.
+
+## C++ Reference Implementation
+
+[`cpp/`](cpp/) holds **libotf1**: the same format as C++ values, with one
+struct per packet kind and two functions that turn them into bytes and back.
+C++17, no dependencies beyond the standard library.
+
+```cpp
+#include <otf1/otf1.hpp>
+
+otf1::HeartbeatPacket beat;
+beat.timestamp = 1739887525000;                 // ms since the Unix epoch, UTC
+beat.source = {"fleet-coordinator", otf1::Role::Coordinator};
+beat.seq = 96;
+std::string text = otf1::encode(beat);          // one line of compact JSON
+
+otf1::Packet packet;
+std::string why;
+if (!otf1::decode(text, packet, &why)) {
+    // Not OTF-1. `why` names the field, for example "node/mode is not a
+    // recognised value". Nothing in `packet` should be used.
+} else if (const auto* status = std::get_if<otf1::StatusPacket>(&packet)) {
+    // status->mode, status->task, ...
+}
+```
+
+`decode()` applies the schema's rules in C++: required fields, closed enums,
+value ranges, no unknown fields, real timestamps, a source whose role fits
+the packet's kind. A program built on it never acts on a packet the schema
+would reject.
+
+**Build and test:**
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
+
+**Use it from another CMake project:**
+
+```cmake
+add_subdirectory(path/to/telemetry-protocol)
+target_link_libraries(your_target PRIVATE otf1::otf1)
+```
+
+**Check packets with the C++ decoder** instead of the schema:
+
+```bash
+./build/otf1_check examples/*.json
+./build/otf1_check fleet-log.jsonl
+./build/otf1_check --expect-invalid tests/invalid/*.json
+```
+
+### Two implementations, held to one answer
+
+The schema and the C++ decoder are two descriptions of the same format, and
+two descriptions drift unless something forces them together. Three things
+do:
+
+- **One corpus.** The C++ tests run over this repository's own `examples/`
+  and `tests/invalid/`, the same files the schema is validated against.
+  Nothing is copied.
+- **Differential testing.** [`tools/differential.py`](tools/differential.py)
+  mutates the example packets about 17,000 ways (a field dropped, a field
+  added, a value swapped for another type, another enum value, a boundary
+  number, a malformed timestamp) and requires the schema and the C++
+  decoder to give the same accept-or-reject verdict on every one. For each
+  packet both accept, the C++ re-encoding must say exactly what the input
+  said. It then mutates JSON text at the byte level, about 46,000 inputs,
+  and requires the C++ parser to accept exactly what a strict RFC 8259
+  reader accepts.
+- **CI runs all of it** on every push and pull request, and builds the
+  library on Linux and Windows.
+
+```bash
+python tools/differential.py        # needs build/otf1_check
+```
+
+Writing that tool tightened the format in three places where the two had
+room to disagree. Timestamps now have an explicit `pattern` as well as a
+`format`, and the validator checks that the date and time are real. `seq`
+has a maximum of 2^53, beyond which a JSON number can no longer tell
+neighbouring integers apart. And strings must be well-formed UTF-8.
 
 ## Example Usage
 `Reclaimer Pod Capture Event`
