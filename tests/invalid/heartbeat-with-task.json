@@ -1,0 +1,8 @@
+{
+  "version": "OTF-1",
+  "kind": "heartbeat",
+  "timestamp": "2025-02-18T14:05:25Z",
+  "source": { "id": "A1", "role": "node" },
+  "seq": 96,
+  "task": { "id": "T-0042", "state": "active" }
+}

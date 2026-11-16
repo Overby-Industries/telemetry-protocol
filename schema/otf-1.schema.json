@@ -2,31 +2,71 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/Overby-Industries/telemetry-protocol/schema/otf-1.schema.json",
   "title": "OTF-1 (Overby Telemetry Format v1)",
-  "description": "Canonical schema for real-time reporting of Overby Industries mining, reclamation, and certification telemetry. See README.md for the full field-by-field rationale.",
+  "description": "Canonical schema for real-time reporting of Overby Industries mining, reclamation, and certification telemetry, and for the fleet-coordination packets exchanged between vehicle/pod nodes and a fleet coordinator. See README.md for the full field-by-field rationale.",
   "type": "object",
-  "required": ["version", "timestamp", "mission", "location", "action", "outcome", "certifications"],
-  "additionalProperties": false,
+  "required": ["version", "timestamp"],
   "properties": {
     "version": {
       "const": "OTF-1"
     },
+    "kind": {
+      "type": "string",
+      "enum": ["event", "status", "heartbeat", "assignment", "ack"],
+      "description": "Which packet this is. Omitted means \"event\", so every packet written before the fleet kinds existed is still valid unchanged."
+    },
     "timestamp": {
       "type": "string",
       "format": "date-time",
-      "description": "UTC ISO-8601 timestamp of the event."
+      "description": "UTC ISO-8601 timestamp. For an event, when it happened; for every other kind, when the sender transmitted the packet."
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "kind": { "const": "event" } } },
+      "then": { "$ref": "#/$defs/event" }
     },
-    "mission": {
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "status" } } },
+      "then": { "$ref": "#/$defs/status" }
+    },
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "heartbeat" } } },
+      "then": { "$ref": "#/$defs/heartbeat" }
+    },
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "assignment" } } },
+      "then": { "$ref": "#/$defs/assignment" }
+    },
+    {
+      "if": { "required": ["kind"], "properties": { "kind": { "const": "ack" } } },
+      "then": { "$ref": "#/$defs/ack" }
+    }
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "nodeType": {
+      "type": "string",
+      "enum": ["reclaimer", "miner", "refinery", "shuttle"]
+    },
+    "taskAction": {
+      "type": "string",
+      "enum": ["capture", "process", "refine", "store", "deorbit", "deploy"],
+      "description": "What a node is asked to do. Each value is the imperative of an event action: a completed \"capture\" task is reported as a \"captured\" event, \"process\" as \"processed\", and so on."
+    },
+    "endpoint": {
       "type": "object",
-      "required": ["id", "podId", "type"],
+      "description": "Who sent a fleet packet.",
+      "required": ["id", "role"],
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string" },
-        "podId": { "type": "string" },
-        "type": {
-          "type": "string",
-          "enum": ["reclaimer", "miner", "refinery"]
-        }
+        "id": { "type": "string", "minLength": 1 },
+        "role": { "type": "string", "enum": ["node", "coordinator"] }
       }
+    },
+    "seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Per-source counter, increasing across every fleet packet that source sends. A receiver orders a source's packets by timestamp first and seq second, and discards any that are not newer than what it has already applied -- duplicates and out-of-order arrivals are routine over light-delayed, store-and-forward links. Timestamp comes first so that a source which restarts and counts from 0 again is still understood."
     },
     "location": {
       "type": "object",
@@ -43,7 +83,6 @@
     },
     "target": {
       "type": "object",
-      "description": "Present for debris-capture events (mission.type = reclaimer). Omitted for mining/refinery processing events that have no single tracked object.",
       "required": ["objectType"],
       "additionalProperties": false,
       "properties": {
@@ -56,44 +95,189 @@
         "mass_kg": { "type": "number", "minimum": 0 }
       }
     },
-    "action": {
-      "type": "string",
-      "enum": ["captured", "processed", "refined", "stored", "deorbited", "deployed"]
-    },
-    "outcome": {
-      "type": "object",
-      "required": ["status"],
-      "additionalProperties": false,
+    "event": {
+      "description": "Something that happened to material: a capture, a processing run, a deployment. This is the original OTF-1 packet and the one the public record is built from.",
+      "required": ["mission", "location", "action", "outcome", "certifications"],
       "properties": {
-        "processedKg": { "type": "number", "minimum": 0 },
-        "repurposedAs": {
-          "type": "string",
-          "enum": ["shield_block", "aggregate", "ingot", "propellant", "polymer", "none"]
+        "mission": {
+          "type": "object",
+          "required": ["id", "podId", "type"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string" },
+            "podId": { "type": "string" },
+            "type": { "$ref": "#/$defs/nodeType" }
+          }
         },
-        "status": {
+        "location": { "$ref": "#/$defs/location" },
+        "target": {
+          "$ref": "#/$defs/target",
+          "description": "Present for debris-capture events (mission.type = reclaimer). Omitted for mining/refinery processing events that have no single tracked object."
+        },
+        "action": {
           "type": "string",
-          "enum": ["stored", "in-transit", "delivered", "failed"]
+          "enum": ["captured", "processed", "refined", "stored", "deorbited", "deployed"]
+        },
+        "outcome": {
+          "type": "object",
+          "required": ["status"],
+          "additionalProperties": false,
+          "properties": {
+            "processedKg": { "type": "number", "minimum": 0 },
+            "repurposedAs": {
+              "type": "string",
+              "enum": ["shield_block", "aggregate", "ingot", "propellant", "polymer", "none"]
+            },
+            "status": {
+              "type": "string",
+              "enum": ["stored", "in-transit", "delivered", "failed"]
+            }
+          }
+        },
+        "certifications": {
+          "type": "object",
+          "required": ["SMESSC"],
+          "additionalProperties": false,
+          "properties": {
+            "SMESSC": {
+              "type": "boolean",
+              "description": "Space Mining Environmental, Safety & Sustainability Certification compliance flag for this event."
+            },
+            "ODCI_contribution": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Incremental contribution (kg) to the Orbital Debris Cleanup Index, if applicable."
+            },
+            "ProofOfCleanupToken": {
+              "type": "string",
+              "description": "Blockchain token id proving this event's outcome, if issued."
+            }
+          }
+        },
+        "taskId": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The assignment this event completes, when the work was assigned by a fleet coordinator. Omitted for work a node did on its own initiative."
         }
       }
     },
-    "certifications": {
-      "type": "object",
-      "required": ["SMESSC"],
-      "additionalProperties": false,
+    "status": {
+      "description": "A node's periodic report of its own state. It is a complete snapshot rather than a delta, so a coordinator that missed any number of earlier packets is fully caught up by the next one it receives.",
+      "required": ["source", "seq", "node", "location"],
       "properties": {
-        "SMESSC": {
-          "type": "boolean",
-          "description": "Space Mining Environmental, Safety & Sustainability Certification compliance flag for this event."
+        "source": {
+          "$ref": "#/$defs/endpoint",
+          "properties": { "role": { "const": "node" } }
         },
-        "ODCI_contribution": {
-          "type": "number",
-          "minimum": 0,
-          "description": "Incremental contribution (kg) to the Orbital Debris Cleanup Index, if applicable."
+        "seq": { "$ref": "#/$defs/seq" },
+        "node": {
+          "type": "object",
+          "required": ["type", "mode", "link", "capabilities"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "$ref": "#/$defs/nodeType" },
+            "mode": {
+              "type": "string",
+              "enum": ["nominal", "degraded", "safe"],
+              "description": "Health as the node itself judges it. nominal: available for work. degraded: finishing what it holds, taking nothing new. safe: local fault response has taken over and any held task is abandoned."
+            },
+            "phase": {
+              "type": "string",
+              "description": "Name of the node's local control state, reported verbatim (for a shuttle, a ShuttleFSM state such as \"OrbitalCruise\"). Informative only: a coordinator must never branch on it."
+            },
+            "link": {
+              "type": "string",
+              "enum": ["connected", "autonomous"],
+              "description": "The node's own view of coordinator contact. autonomous: it has stopped hearing the coordinator and is running on local defaults, even though this packet may still get through."
+            },
+            "capabilities": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/taskAction" },
+              "uniqueItems": true,
+              "description": "Task actions this node can perform. Advertised by the node so a coordinator needs no built-in table of node types."
+            }
+          }
         },
-        "ProofOfCleanupToken": {
-          "type": "string",
-          "description": "Blockchain token id proving this event's outcome, if issued."
+        "location": { "$ref": "#/$defs/location" },
+        "task": {
+          "type": "object",
+          "description": "The task the node is working on, or the last one it finished. Kept in every status until a newer task replaces it, so an outcome is never lost with a single dropped packet. Omitted only by a node that has never held a task.",
+          "required": ["id", "state"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "state": { "type": "string", "enum": ["active", "completed", "failed"] },
+            "progress": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
         }
+      }
+    },
+    "heartbeat": {
+      "description": "Minimal liveness signal from either side. A node that stops hearing coordinator heartbeats falls back to its local defaults; it never waits for one before acting on a fault.",
+      "required": ["source", "seq"],
+      "properties": {
+        "source": { "$ref": "#/$defs/endpoint" },
+        "seq": { "$ref": "#/$defs/seq" }
+      }
+    },
+    "assignment": {
+      "description": "A coordinator offering one task to one node. It is an offer, not a command: the node's local control has the final say and answers with an ack.",
+      "required": ["source", "destination", "seq", "task", "acceptBy"],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/endpoint",
+          "properties": { "role": { "const": "coordinator" } }
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Id of the node this offer is for."
+        },
+        "seq": { "$ref": "#/$defs/seq" },
+        "task": {
+          "type": "object",
+          "required": ["id", "action", "location"],
+          "additionalProperties": false,
+          "properties": {
+            "id": { "type": "string", "minLength": 1 },
+            "action": { "$ref": "#/$defs/taskAction" },
+            "location": { "$ref": "#/$defs/location" },
+            "target": { "$ref": "#/$defs/target" }
+          }
+        },
+        "acceptBy": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The node must refuse the offer if it arrives after this instant. This bounds how stale an offer can be when it finally lands, and it is what lets a coordinator conclude from a later status that the offer was not taken."
+        }
+      }
+    },
+    "ack": {
+      "description": "A node's answer to an assignment.",
+      "required": ["source", "destination", "seq", "taskId", "result"],
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/endpoint",
+          "properties": { "role": { "const": "node" } }
+        },
+        "destination": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Id of the coordinator that made the offer."
+        },
+        "seq": { "$ref": "#/$defs/seq" },
+        "taskId": { "type": "string", "minLength": 1 },
+        "result": { "type": "string", "enum": ["accepted", "rejected"] },
+        "reason": {
+          "type": "string",
+          "enum": ["busy", "degraded", "safe-mode", "expired", "unsupported", "refused"],
+          "description": "Why the offer was rejected. busy and expired are transient; unsupported and refused mean this node should not be offered this task again."
+        }
+      },
+      "if": { "required": ["result"], "properties": { "result": { "const": "rejected" } } },
+      "then": { "required": ["reason"] },
+      "dependentSchemas": {
+        "reason": { "properties": { "result": { "const": "rejected" } } }
       }
     }
   }

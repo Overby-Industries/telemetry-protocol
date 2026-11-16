@@ -1,0 +1,9 @@
+{
+  "version": "OTF-1",
+  "kind": "status",
+  "timestamp": "2025-02-18T14:05:30Z",
+  "source": { "id": "fleet-coordinator", "role": "coordinator" },
+  "seq": 412,
+  "node": { "type": "reclaimer", "mode": "nominal", "link": "connected", "capabilities": ["capture"] },
+  "location": { "zone": "LEO" }
+}
