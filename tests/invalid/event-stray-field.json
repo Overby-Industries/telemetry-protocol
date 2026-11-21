@@ -1,0 +1,10 @@
+{
+  "version": "OTF-1",
+  "timestamp": "2025-03-02T09:12:00Z",
+  "mission": { "id": "nea-2025-alpha", "podId": "R7", "type": "refinery" },
+  "location": { "zone": "NEA" },
+  "action": "processed",
+  "outcome": { "status": "stored" },
+  "certifications": { "SMESSC": true },
+  "operatorNote": "not part of OTF-1"
+}

@@ -1,0 +1,10 @@
+{
+  "version": "OTF-1",
+  "kind": "ack",
+  "timestamp": "2025-02-18T14:05:01Z",
+  "source": { "id": "A1", "role": "node" },
+  "destination": "fleet-coordinator",
+  "seq": 411,
+  "taskId": "T-0042",
+  "result": "rejected"
+}
